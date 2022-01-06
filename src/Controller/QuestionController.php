@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use Pagerfanta\Pagerfanta;
+use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use App\Entity\Question;
 use App\Repository\AnswerRepository;
 use App\Repository\QuestionRepository;
@@ -26,14 +28,21 @@ class QuestionController extends AbstractController
 
 
     /**
-     * @Route("/", name="app_homepage")
+     * @Route("/{page<\d+>}", name="app_homepage")
      */
-    public function homepage(QuestionRepository $repository)
+    public function homepage(QuestionRepository $repository, int $page = 1)
     {
-        $questions = $repository->findAllAskedOrderedByNewest();
+        $queryBuilder = $repository->createAllAskedOrderedByNewestQueryBuilder();
+
+        $pagerFanta = new Pagerfanta(
+            new QueryAdapter($queryBuilder)
+        );
+
+        $pagerFanta->setMaxPerPage(5);
+        $pagerFanta->setCurrentPage($page);
 
         return $this->render('question/homepage.html.twig', [
-            'questions' => $questions,
+            'pager' => $pagerFanta,
         ]);
     }
 
